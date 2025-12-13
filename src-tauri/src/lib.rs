@@ -106,25 +106,18 @@ pub fn run() {
                                 BLOAT REMOVAL & FIXES
                    ========================================= */
                 div[role="navigation"][aria-label="Przełącznik skrzynki odbiorczej"],
-                div[role="navigation"][aria-label="Inbox switch"],
+                div[role="navigation"][aria-label="Inbox switch"] { 
+                    width: 0 !important;
+                    height: 0 !important;
+                    opacity: 0 !important;
+                    overflow: hidden !important;
+                    position: absolute !important;
+                    pointer-events: none !important;
+                }
+
+                /* Hide Banner bloat */
                 a[href="https://www.facebook.com/"],
                 div[role="banner"] { display: none !important; }
-
-                /* Settings Button Logic */
-                div[role="banner"] { 
-                    display: block !important; 
-                    position: fixed !important;
-                    top: 40px !important; 
-                    left: 10px !important;
-                    width: 40px !important;
-                    height: 40px !important;
-                    opacity: 0 !important; 
-                    z-index: 0 !important; 
-                    pointer-events: none !important; 
-                }
-                div[role="banner"] div[role="button"] {
-                    pointer-events: auto !important;
-                }
 
                 div:has(> div[role="navigation"]),
                 div:has(> div[role="main"]) {
@@ -132,6 +125,7 @@ pub fn run() {
                     margin: 0 !important;
                     background-color: transparent !important;
                 }
+
                 div:has(> div[role="navigation"][aria-label="Przełącznik skrzynki odbiorczej"]) {
                     padding-left: 0px !important;
                     display: flex !important; 
@@ -222,6 +216,27 @@ pub fn run() {
                 }
 
                 /* =========================================
+                            DIALOGS & MODALS
+                   ========================================= */
+                
+                div[role="dialog"] {
+                    position: fixed !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    max-height: calc(100vh - var(--titlebar-height) - 60px) !important;
+                    max-width: calc(100vw - 60px) !important;
+                    overflow-y: auto !important;
+                    overflow-x: hidden !important;
+                    margin: 0 !important;
+                }
+                
+                div[role="dialog"] > div {
+                    max-height: inherit !important;
+                    overflow: visible !important;
+                }
+
+                /* =========================================
                             MATERIAL UI OVERRIDES
                    ========================================= */
                 
@@ -238,6 +253,7 @@ pub fn run() {
                     padding-left: 20px !important;
                 }
 
+                /* Nuke Native Overlays */
                 div[role="navigation"] div[role="row"] div[role="none"][style*="inset"] {
                     display: none !important;
                 }
@@ -279,6 +295,7 @@ pub fn run() {
                 div[role="navigation"] div[role="row"]:has(a[aria-current="page"]) {
                     background-color: #4A4458 !important;
                 }
+
                 /* Re-apply text color to the link since we nuked its styles */
                 div[role="navigation"] div[role="row"]:has(a[aria-current="page"]) a {
                     color: #E8DEF8 !important;
@@ -318,7 +335,6 @@ pub fn run() {
                     to { opacity: 0; transform: scale(0.8); }
                 }
 
-                /* Prevent layout shift by making the arrow container not affect layout */
                 div.x11lfxj5:has(> div[role="button"][aria-label="Zamknij tryb wpisywania"]),
                 div.x11lfxj5:has(> div[role="button"][aria-label="Close typing mode"]) {
                     width: 0 !important;
@@ -333,7 +349,6 @@ pub fn run() {
                     animation: fadeScaleIn 0.4s cubic-bezier(0.05, 0.7, 0.1, 1.0) forwards !important;
                 }
 
-                /* Shift entire search container (input + icon) when arrow is visible */
                 div.x11lfxj5:has(> div[role="button"][aria-label="Zamknij tryb wpisywania"]) ~ label,
                 div.x11lfxj5:has(> div[role="button"][aria-label="Close typing mode"]) ~ label,
                 div.x11lfxj5:has(> div[role="button"][aria-label="Zamknij tryb wpisywania"]) ~ div:has(input[type="search"]),
@@ -342,7 +357,6 @@ pub fn run() {
                     transition: margin-left 0.3s cubic-bezier(0.05, 0.7, 0.1, 1.0) !important;
                 }
 
-                /* Default state for search container - animate back when arrow disappears */
                 label:has(input[type="search"]),
                 div:has(> input[type="search"]) {
                     margin-left: 0 !important;
@@ -356,26 +370,12 @@ pub fn run() {
                         <span class="app-icon">💬</span> Messterial
                     </div>
                     <div class="titlebar-button" id="titlebar-settings" title="Settings">
-                        <svg class="titlebar-icon" viewBox="0 0 24 24">
-                            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-                        </svg>
+                        <svg class="titlebar-icon" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
                     </div>
                     <div class="titlebar-controls">
-                        <div class="titlebar-button" id="titlebar-minimize" title="Minimize">
-                            <svg class="titlebar-icon" viewBox="0 0 24 24">
-                                <path d="M5 19h14c.55 0 1-.45 1-1s-.45-1-1-1H5c-.55 0-1 .45-1 1s.45 1 1 1z"/>
-                            </svg>
-                        </div>
-                        <div class="titlebar-button" id="titlebar-maximize" title="Maximize">
-                            <svg class="titlebar-icon" viewBox="0 0 24 24">
-                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
-                            </svg>
-                        </div>
-                        <div class="titlebar-button" id="titlebar-close" title="Close">
-                            <svg class="titlebar-icon" viewBox="0 0 24 24">
-                                <path d="M18.3 5.71a.9959.9959 0 0 0-1.41 0L12 10.59 7.11 5.7a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41L10.59 12 5.7 16.89c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0L12 13.41l4.89 4.89c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/>
-                            </svg>
-                        </div>
+                        <div class="titlebar-button" id="titlebar-minimize"><svg class="titlebar-icon" viewBox="0 0 24 24"><path d="M5 19h14c.55 0 1-.45 1-1s-.45-1-1-1H5c-.55 0-1 .45-1 1s.45 1 1 1z"/></svg></div>
+                        <div class="titlebar-button" id="titlebar-maximize"><svg class="titlebar-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg></div>
+                        <div class="titlebar-button" id="titlebar-close"><svg class="titlebar-icon" viewBox="0 0 24 24"><path d="M18.3 5.71a.9959.9959 0 0 0-1.41 0L12 10.59 7.11 5.7a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41L10.59 12 5.7 16.89c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0L12 13.41l4.89 4.89c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/></svg></div>
                     </div>
                 </div>
             "#;
@@ -401,23 +401,43 @@ pub fn run() {
 
                         document.getElementById('titlebar-settings').addEventListener('click', () => {{
                             const selectors = [
-                                'div[role=\"banner\"] div[role=\"button\"]', 
-                                'div[role=\"button\"][aria-label=\"Ustawienia użytkownika\"]',
-                                'div[role=\"button\"][aria-label=\"Account settings\"]',
-                                'div[role=\"button\"][aria-label*=\"Profil\"]'
+                                'div[role=\"navigation\"] div[role=\"button\"][aria-label=\"Ustawienia użytkownika\"]', // Polish
+                                'div[role=\"navigation\"] div[role=\"button\"][aria-label=\"Account settings\"]', // English
+                                'div[role=\"navigation\"] div[role=\"button\"][aria-label*=\"Profil\"]',
+                                // Fallback: try to find the very last button in the hidden sidebar rail
+                                'div[role=\"navigation\"] > div:last-child div[role=\"button\"]' 
                             ];
-                                    
+                            
                             for (const selector of selectors) {{
                                 const btn = document.querySelector(selector);
                                 if (btn) {{
+                                    console.log('Messterial: Found settings button via selector:', selector);
                                     btn.click();
                                     return;
                                 }}
                             }}
-                            console.error(\"Could not find settings button.\");
+                            console.error(\"Messterial: Could not find settings button.\");
                         }});
                     }};
-                    
+
+                    const turboMode = () => {{
+                        // Disable smooth scrolling for instant feel
+                        const css = 'html, body {{ scroll-behavior: auto !important; }} * {{ transition-delay: 0ms !important; }}';
+                        const s = document.createElement('style');
+                        s.innerHTML = css;
+                        document.head.appendChild(s);
+
+                        // Block Analytics/Logging
+                        const originalFetch = window.fetch;
+                        window.fetch = async (...args) => {{
+                            const url = args[0] ? args[0].toString() : '';
+                            if (url.includes('/logging') || url.includes('/falco') || url.includes('analytics')) {{
+                                return new Response();
+                            }}
+                            return originalFetch(...args);
+                        }};
+                    }};
+                    turboMode();
                     let tauriInterval = setInterval(() => {{
                         if (window.__TAURI__) {{
                             clearInterval(tauriInterval);
