@@ -64,6 +64,8 @@ pub fn run() {
                     box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important; 
                     background-color: transparent !important;
                     border: none !important;
+                    contain: layout paint style !important;
+                    transform: translateZ(0) !important; 
                 }
 
                 /* --- LEFT CARD (Sidebar) --- */
@@ -235,7 +237,11 @@ pub fn run() {
                     text-align: left !important;
                     padding-left: 20px !important;
                 }
-                
+
+                div[role="navigation"] div[role="row"] div[role="none"][style*="inset"] {
+                    display: none !important;
+                }
+
                 /* Reset Background of ALL children so they don't bleed out */
                 div[role="navigation"] div[role="row"] a,
                 div[role="navigation"] div[role="row"] a:hover,
@@ -246,33 +252,37 @@ pub fn run() {
                     outline: none !important;
                 }
 
-                /* Nuke Native Overlays again just to be sure */
-                div[role="navigation"] div[role="row"] div[role="none"][style*="inset"] {
-                    display: none !important;
-                }
-
                 /* Apply Everything to the Parent Container */
                 div[role="navigation"] div[role="row"] {
                     border-radius: 24px !important;
                     margin: 2px 4px !important;
                     overflow: hidden !important;
-                    transition: background-color 0.1s ease;
+                    position: relative !important;
+                    transition: background-color 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
                 }
 
+                /* Custom Hover State */
                 div[role="navigation"] div[role="row"]:hover {
                     background-color: var(--md-hover-layer) !important;
+                    transform: scale(1.01) !important;
+                    z-index: 10 !important;
                 }
 
+                /* Custom Active Click */
+                div[role="navigation"] div[role="row"]:active,
                 div[role="navigation"] div[role="row"]:has(a:active) {
                     background-color: var(--md-active-layer) !important;
+                    transform: scale(0.98) !important;
                 }
 
+                /* Active State (Purple Pill) */
                 div[role="navigation"] div[role="row"]:has(a[aria-current="page"]) {
                     background-color: #4A4458 !important;
                 }
                 /* Re-apply text color to the link since we nuked its styles */
                 div[role="navigation"] div[role="row"]:has(a[aria-current="page"]) a {
                     color: #E8DEF8 !important;
+                    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
 
                 /* --- CHAT BUBBLES --- */
@@ -339,7 +349,7 @@ pub fn run() {
                     transition: margin-left 0.3s cubic-bezier(0.05, 0.7, 0.1, 1.0) !important;
                 }
             "#;
-            
+
             let titlebar_html = r#"
                 <div id="custom-titlebar">
                     <div class="titlebar-drag-region" data-tauri-drag-region>
@@ -370,7 +380,7 @@ pub fn run() {
                 </div>
             "#;
 
-           // =========================================================================
+            // =========================================================================
             //                            LAYOUT MANAGER
             // =========================================================================
             let init_script = format!(
