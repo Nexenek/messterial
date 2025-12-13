@@ -1,0 +1,60 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Env and secrets
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.npmrc
+.yarnrc
+
+# Caches
+.cache/
+.turbo/
+.pnpm-store/
+
+# Bun/Vite
+.vite/
+
+# Tauri/Rust build artifacts
+src-tauri/target/
+src-tauri/**/build/
+src-tauri/**/bundle/
+src-tauri/**/debug/
+src-tauri/**/release/
+src-tauri/**/incremental/
+src-tauri/**/deps/
+src-tauri/**/resources/
+src-tauri/**/wix/
+src-tauri/**/nsis/
+
+# Cargo/Rust tooling
+**/*.d
+**/*.rlib
+**/*.rmeta
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
