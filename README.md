@@ -1,4 +1,4 @@
-# messterial
+# Messterial
 A material 3-ish wrapper for Meta Messenger I made because they're removing the desktop app.
 
 # Features
@@ -41,26 +41,26 @@ If you encounter any bugs or have feature requests, please open an issue on the 
 - [x] Custom Title Bar
 - [x] Move settings from the sidebar via native menu
 - [x] Improve performance with better hardware acceleration
-- [] Persist Window State
-- [] Custom app logo
+- [ ] Persist Window State
+- [ ] Custom app logo
 #### Theming:
 - [x] Custom UI layout
 - [x] Basic material implementation
 - [x] Round chat bubbles
 - [x] Custom animations
-- [] Custom scrollbars
-- [] Accent color picker
-- [] Dynmamic font sizing
+- [ ] Custom scrollbars
+- [ ] Accent color picker
+- [ ] Dynamic font sizing
 #### Privacy & Anti-Bloat:
 - [x] Remove sidebar (marketplace, stories, etc.)
 - [x] Remove facebook connections
-- [] Block "seen" indicators
-- [] Block "typing" indicators
-- [] Further tracker blocking
+- [ ] Block "seen" indicators
+- [ ] Block "typing" indicators
+- [ ] Further tracker blocking
 #### System Integration:
-- [] Tray icon
-- [] Native notifications
-- [] Taskbar badge
+- [ ] Tray icon
+- [ ] Native notifications
+- [ ] Taskbar badge
 
 ---
 
