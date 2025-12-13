@@ -105,6 +105,7 @@ pub fn run() {
                    ========================================= */
                 div[role="navigation"][aria-label="Przełącznik skrzynki odbiorczej"],
                 div[role="navigation"][aria-label="Inbox switch"],
+                a[href="https://www.facebook.com/"],
                 div[role="banner"] { display: none !important; }
 
                 /* Settings Button Logic */
@@ -292,6 +293,50 @@ pub fn run() {
                 }
                 div[role="navigation"] div[role="gridcell"] div[role="button"]:hover {
                     background-color: rgba(255,255,255,0.2) !important;
+                }
+
+                /* =========================================
+                                ANIMATIONS
+                   ========================================= */
+                @keyframes fadeScaleIn {
+                    from { opacity: 0; transform: scale(0.8); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+
+                @keyframes fadeScaleOut {
+                    from { opacity: 1; transform: scale(1); }
+                    to { opacity: 0; transform: scale(0.8); }
+                }
+
+                /* Prevent layout shift by making the arrow container not affect layout */
+                div.x11lfxj5:has(> div[role="button"][aria-label="Zamknij tryb wpisywania"]),
+                div.x11lfxj5:has(> div[role="button"][aria-label="Close typing mode"]) {
+                    width: 0 !important;
+                    overflow: visible !important;
+                    flex-shrink: 0 !important;
+                }
+
+                div[role="button"][aria-label="Zamknij tryb wpisywania"],
+                div[role="button"][aria-label="Close typing mode"] {
+                    position: relative !important;
+                    left: -12px !important;
+                    animation: fadeScaleIn 0.4s cubic-bezier(0.05, 0.7, 0.1, 1.0) forwards !important;
+                }
+
+                /* Shift entire search container (input + icon) when arrow is visible */
+                div.x11lfxj5:has(> div[role="button"][aria-label="Zamknij tryb wpisywania"]) ~ label,
+                div.x11lfxj5:has(> div[role="button"][aria-label="Close typing mode"]) ~ label,
+                div.x11lfxj5:has(> div[role="button"][aria-label="Zamknij tryb wpisywania"]) ~ div:has(input[type="search"]),
+                div.x11lfxj5:has(> div[role="button"][aria-label="Close typing mode"]) ~ div:has(input[type="search"]) {
+                    margin-left: 26px !important;
+                    transition: margin-left 0.3s cubic-bezier(0.05, 0.7, 0.1, 1.0) !important;
+                }
+
+                /* Default state for search container - animate back when arrow disappears */
+                label:has(input[type="search"]),
+                div:has(> input[type="search"]) {
+                    margin-left: 0 !important;
+                    transition: margin-left 0.3s cubic-bezier(0.05, 0.7, 0.1, 1.0) !important;
                 }
             "#;
             
