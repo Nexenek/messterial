@@ -3,12 +3,7 @@
   "productName": "messterial",
   "version": "0.1.0",
   "identifier": "com.kuba.messterial",
-  "build": {
-    "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
-    "frontendDist": "../dist"
-  },
+  "build": {},
   "app": {
     "withGlobalTauri": true,
     "windows": [],

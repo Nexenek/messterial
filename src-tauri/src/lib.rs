@@ -2,6 +2,8 @@ use tauri::{WebviewUrl, WebviewWindowBuilder};
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_window_state::Builder::new().build())
         .setup(|app| {
             let material_css = r#"
                 /* =========================================
@@ -438,6 +440,165 @@ pub fn run() {
                         }};
                     }};
                     turboMode();
+
+                    // External link handler
+                    const setupExternalLinks = () => {{
+                        const openExternalUrl = async (href) => {{
+                            if (!window.__TAURI__) return false;
+                            try {{
+                                // Tauri 2 plugin invoke pattern
+                                await window.__TAURI__.core.invoke('plugin:opener|open_url', {{ url: href }});
+                                return true;
+                            }} catch (err) {{
+                                console.error('Messterial: Failed to open URL:', err);
+                                return false;
+                            }}
+                        }};
+
+                        document.addEventListener('click', async (e) => {{
+                            const link = e.target.closest('a[href]');
+                            if (!link) return;
+                            
+                            const href = link.getAttribute('href');
+                            if (!href) return;
+                            
+                            // Check if it's an external link (not messenger.com)
+                            const isExternal = href.startsWith('http://') || href.startsWith('https://');
+                            const isMessengerInternal = href.includes('messenger.com') || href.includes('facebook.com/messages') || href.includes('facebook.com/login');
+                            
+                            if (isExternal && !isMessengerInternal) {{
+                                e.preventDefault();
+                                e.stopPropagation();
+                                await openExternalUrl(href);
+                            }}
+                        }}, true);
+                        
+                        // Also handle middle-click
+                        document.addEventListener('auxclick', async (e) => {{
+                            if (e.button !== 1) return; // Middle click only
+                            
+                            const link = e.target.closest('a[href]');
+                            if (!link) return;
+                            
+                            const href = link.getAttribute('href');
+                            if (!href) return;
+                            
+                            const isExternal = href.startsWith('http://') || href.startsWith('https://');
+                            const isMessengerInternal = href.includes('messenger.com') || href.includes('facebook.com/messages') || href.includes('facebook.com/login');
+                            
+                            if (isExternal && !isMessengerInternal) {{
+                                e.preventDefault();
+                                e.stopPropagation();
+                                await openExternalUrl(href);
+                            }}
+                        }}, true);
+                    }};
+                    setupExternalLinks();
+
+                    // Badge notification
+                    const setupBadgeNotifications = () => {{
+                        let lastBadgeCount = -1; // Start at -1 to force first update
+                        console.log('Messterial: Badge notifications initialized');
+                        
+                        // Create a badge icon with number overlay
+                        const createBadgeIcon = async (count) => {{
+                            const size = 16;
+                            const canvas = document.createElement('canvas');
+                            canvas.width = size;
+                            canvas.height = size;
+                            const ctx = canvas.getContext('2d');
+                            
+                            // Draw red circle
+                            ctx.fillStyle = '#e53935';
+                            ctx.beginPath();
+                            ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Draw text
+                            ctx.fillStyle = 'white';
+                            ctx.font = 'bold 11px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            const text = count > 9 ? '9+' : count.toString();
+                            ctx.fillText(text, size/2, size/2 + 1);
+                            
+                            // Create Tauri Image
+                            const imageData = ctx.getImageData(0, 0, size, size);
+                            const rgba = new Uint8Array(imageData.data);
+                            const Image = window.__TAURI__.image.Image;
+                            return await Image.new(rgba, size, size);
+                        }};
+                        
+                        const countUnreadChats = () => {{
+                            // Count unread indicators in the chat list
+                            const chatRows = document.querySelectorAll('div[role=\"navigation\"] div[role=\"row\"]');
+                            let unreadCount = 0;
+                            
+                            chatRows.forEach((row, idx) => {{
+                                // Look for the unread indicator dot
+                                const unreadIndicator = row.querySelector('div[aria-hidden=\"true\"][role=\"button\"][tabindex=\"-1\"]');
+                                if (unreadIndicator) {{
+                                    unreadCount++;
+                                }}
+                            }});
+                            
+                            return unreadCount;
+                        }};
+                        
+                        const updateBadge = async () => {{
+                            if (!window.__TAURI__) return;
+                            
+                            const count = countUnreadChats();
+                            
+                            if (count !== lastBadgeCount) {{
+                                lastBadgeCount = count;
+                                try {{
+                                    const appWindow = window.__TAURI__.window.getCurrentWindow();
+                                    
+                                    if (count > 0) {{
+                                        // Create overlay icon with the count
+                                        const icon = await createBadgeIcon(count);
+                                        await appWindow.setOverlayIcon(icon);
+                                        console.log('Messterial: Badge set to', count);
+                                    }} else {{
+                                        // Clear overlay
+                                        await appWindow.setOverlayIcon(null);
+                                        console.log('Messterial: Badge cleared');
+                                    }}
+                                }} catch (err) {{
+                                    console.error('Messterial: Failed to update badge:', err);
+                                }}
+                            }}
+                        }};
+
+                        // Observe the navigation/chat list for changes
+                        const observeChatList = () => {{
+                            const nav = document.querySelector('div[role=\"navigation\"]');
+                            if (nav) {{
+                                const observer = new MutationObserver(() => updateBadge());
+                                observer.observe(nav, {{ childList: true, subtree: true, attributes: true }});
+                                console.log('Messterial: Observing chat list for unread changes');
+                            }}
+                        }};
+
+                        // Poll periodically to catch all updates and initialize observer
+                        setInterval(() => {{
+                            updateBadge();
+                            // Try to set up observer if not already done
+                            if (!document.querySelector('div[role=\"navigation\"].__messterial_observed')) {{
+                                const nav = document.querySelector('div[role=\"navigation\"]');
+                                if (nav) {{
+                                    nav.classList.add('__messterial_observed');
+                                    observeChatList();
+                                }}
+                            }}
+                        }}, 2000);
+                        
+                        // Initial check
+                        setTimeout(updateBadge, 3000);
+                    }};
+                    setupBadgeNotifications();
+
                     let tauriInterval = setInterval(() => {{
                         if (window.__TAURI__) {{
                             clearInterval(tauriInterval);
