@@ -58,3 +58,5 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+src-tauri/~/.tauri/messterial.key.pub
+src-tauri/~/.tauri/messterial.key

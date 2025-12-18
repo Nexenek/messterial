@@ -1,7 +1,12 @@
-use tauri::{WebviewUrl, WebviewWindowBuilder};
+use std::sync::atomic::{AtomicU32, Ordering};
+use tauri::{webview::NewWindowResponse, WebviewUrl, WebviewWindowBuilder};
+use tauri_plugin_updater::UpdaterExt;
+
+static WINDOW_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .setup(|app| {
@@ -611,6 +616,31 @@ pub fn run() {
                 html = titlebar_html
             );
 
+            let app_handle = app.handle().clone();
+            let app_handle_for_new_window = app.handle().clone();
+            
+            tauri::async_runtime::spawn(async move {
+                match app_handle.updater() {
+                    Ok(updater) => {
+                        match updater.check().await {
+                            Ok(Some(update)) => {
+                                println!("Messterial: Update found: {}", update.version);
+                                // Download and install automatically
+                                if let Err(e) = update.download_and_install(|_,_| {}, || {}).await {
+                                    println!("Messterial: Update failed: {}", e);
+                                } else {
+                                    println!("Messterial: Update installed! Restarting...");
+                                    app_handle.restart();
+                                }
+                            }
+                            Ok(None) => println!("Messterial: You are on the latest version."),
+                            Err(e) => println!("Messterial: Failed to check for updates: {}", e),
+                        }
+                    }
+                    Err(e) => println!("Messterial: Failed to initialize updater: {}", e),
+                }
+            });
+
             WebviewWindowBuilder::new(
                 app,
                 "main",
@@ -620,7 +650,52 @@ pub fn run() {
             .inner_size(1200.0, 800.0)
             .decorations(false)
             .initialization_script(&init_script)
+            .on_new_window(move |url, features| {
+                // Allow Messenger call windows and other legitimate popups
+                let url_str = url.as_str();
+                println!("Messterial: New window request for URL: {}", url_str);
+                
+                // Check if this is a Messenger/Facebook related URL (calls, auth, etc.)
+                let is_messenger_related = url_str.contains("messenger.com") 
+                    || url_str.contains("facebook.com")
+                    || url_str.contains("fbcdn.net")
+                    || url_str.starts_with("about:blank"); // Calls often start with about:blank
+                
+                if is_messenger_related {
+                    // Generate a unique window label
+                    let window_id = WINDOW_COUNTER.fetch_add(1, Ordering::SeqCst);
+                    let label = format!("popup-{}", window_id);
+                    
+                    // Create the popup window for calls/auth
+                    let builder = WebviewWindowBuilder::new(
+                        &app_handle_for_new_window,
+                        &label,
+                        WebviewUrl::External(url.clone()),
+                    )
+                    .window_features(features)
+                    .title("Messenger")
+                    .inner_size(800.0, 600.0)
+                    .center()
+                    .on_document_title_changed(|window, title| {
+                        let _ = window.set_title(&title);
+                    });
+                    
+                    match builder.build() {
+                        Ok(window) => NewWindowResponse::Create { window },
+                        Err(e) => {
+                            eprintln!("Messterial: Failed to create popup window: {}", e);
+                            NewWindowResponse::Deny
+                        }
+                    }
+                } else {
+                    // For non-Messenger URLs, open in external browser
+                    println!("Messterial: Denying external URL: {}", url_str);
+                    NewWindowResponse::Deny
+                }
+            })
             .build()?;
+
+
 
             Ok(())
         })
