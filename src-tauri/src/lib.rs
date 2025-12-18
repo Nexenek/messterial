@@ -1,4 +1,6 @@
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::time::Duration;
+use tauri::{Emitter, Listener};
 use tauri::{webview::NewWindowResponse, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_updater::UpdaterExt;
 
@@ -604,6 +606,27 @@ pub fn run() {
                     }};
                     setupBadgeNotifications();
 
+                    // Update consent prompt via events
+                    const setupUpdateConsent = () => {{
+                        if (!window.__TAURI__ || !window.__TAURI__.event) return;
+                        window.__TAURI__.event.listen('messterial:prompt-update', async (event) => {{
+                            try {{
+                                const payload = event && event.payload ? event.payload : {{}};
+                                const current = payload.current || '';
+                                const version = payload.version || '';
+                                const message = `Version ${{version}} is available.\n\nCurrent version: ${{current}}\nNew version: ${{version}}\n\nInstall now?`;
+                                const approved = window.confirm(message);
+                                await window.__TAURI__.event.emit('messterial:update-decision', {{ approved }});
+                            }} catch (err) {{
+                                console.error('Messterial: Update consent failed:', err);
+                                try {{
+                                    await window.__TAURI__.event.emit('messterial:update-decision', {{ approved: false }});
+                                }} catch {{}}
+                            }}
+                        }});
+                    }};
+                    setupUpdateConsent();
+
                     let tauriInterval = setInterval(() => {{
                         if (window.__TAURI__) {{
                             clearInterval(tauriInterval);
@@ -616,30 +639,7 @@ pub fn run() {
                 html = titlebar_html
             );
 
-            let app_handle = app.handle().clone();
             let app_handle_for_new_window = app.handle().clone();
-            
-            tauri::async_runtime::spawn(async move {
-                match app_handle.updater() {
-                    Ok(updater) => {
-                        match updater.check().await {
-                            Ok(Some(update)) => {
-                                println!("Messterial: Update found: {}", update.version);
-                                // Download and install automatically
-                                if let Err(e) = update.download_and_install(|_,_| {}, || {}).await {
-                                    println!("Messterial: Update failed: {}", e);
-                                } else {
-                                    println!("Messterial: Update installed! Restarting...");
-                                    app_handle.restart();
-                                }
-                            }
-                            Ok(None) => println!("Messterial: You are on the latest version."),
-                            Err(e) => println!("Messterial: Failed to check for updates: {}", e),
-                        }
-                    }
-                    Err(e) => println!("Messterial: Failed to initialize updater: {}", e),
-                }
-            });
 
             WebviewWindowBuilder::new(
                 app,
@@ -695,7 +695,56 @@ pub fn run() {
             })
             .build()?;
 
+            // Check for updates and ask for user consent via JS confirm
+            {
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    match app_handle.updater() {
+                        Ok(updater) => match updater.check().await {
+                            Ok(Some(update)) => {
+                                println!("Messterial: Update found: {}", update.version);
+                                // Small delay to let the webview initialize its listeners
+                                std::thread::sleep(Duration::from_millis(1500));
 
+                                let _ = app_handle.emit(
+                                    "messterial:prompt-update",
+                                    serde_json::json!({
+                                        "current": update.current_version,
+                                        "version": update.version
+                                    }),
+                                );
+
+                                let (tx, rx) = std::sync::mpsc::channel::<bool>();
+                                let tx_clone = tx.clone();
+                                app_handle.listen("messterial:update-decision", move |event| {
+                                    let payload_str = event.payload();
+                                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(payload_str) {
+                                        if let Some(appr) = val.get("approved").and_then(|v| v.as_bool()) {
+                                            let _ = tx_clone.send(appr);
+                                        }
+                                    }
+                                });
+
+                                let approved = rx.recv_timeout(Duration::from_secs(60)).unwrap_or(false);
+                                if approved {
+                                    println!("Messterial: User approved update, downloading...");
+                                    if let Err(e) = update.download_and_install(|_,_| {}, || {}).await {
+                                        println!("Messterial: Update failed: {}", e);
+                                    } else {
+                                        println!("Messterial: Update installed! Restarting...");
+                                        app_handle.restart();
+                                    }
+                                } else {
+                                    println!("Messterial: User declined update or timeout");
+                                }
+                            }
+                            Ok(None) => println!("Messterial: You are on the latest version."),
+                            Err(e) => println!("Messterial: Failed to check for updates: {}", e),
+                        },
+                        Err(e) => println!("Messterial: Failed to initialize updater: {}", e),
+                    }
+                });
+            }
 
             Ok(())
         })
