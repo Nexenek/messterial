@@ -4,7 +4,7 @@
   "description": "Allow Messenger to control the window",
   "windows": ["main"],
   "remote": {
-    "urls": ["https://www.messenger.com/*", "https://messenger.com/*"]
+    "urls": ["https://www.facebook.com/messages/*", "https://facebook.com/messages/*"]
   },
   "permissions": [
     "core:window:allow-minimize",

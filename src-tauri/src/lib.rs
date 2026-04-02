@@ -644,7 +644,7 @@ pub fn run() {
             WebviewWindowBuilder::new(
                 app,
                 "main",
-                WebviewUrl::External("https://www.messenger.com/login".parse().unwrap())
+                WebviewUrl::External("https://www.facebook.com/messages".parse().unwrap())
             )
             .title("Messterial")
             .inner_size(1200.0, 800.0)
