@@ -80,8 +80,12 @@ pub fn run() {
                 /* --- LEFT CARD (Sidebar) --- */
                 div[role="navigation"] {
                     margin-left: var(--gap-size) !important;
-                    margin-right: calc(var(--middle-gap) / 2) !important; 
-                    padding-right: 4px !important; 
+                    margin-right: var(--middle-gap) !important; 
+                    height: 100% !important;
+                }
+
+                div[role="navigation"] > div {
+                    background: transparent !important;
                 }
 
                 /* --- RIGHT CARD (Chat View) --- */
@@ -126,7 +130,16 @@ pub fn run() {
 
                 /* Hide Banner bloat */
                 a[href="https://www.facebook.com/"],
-                div[role="banner"] { display: none !important; }
+                div[role="banner"] {
+                    display: none !important;
+                }
+
+                /* kill the reserved space the parent holds for it */
+                div[role="banner"] + div,
+                div:has(> div[role="banner"]) {
+                    padding-top: 0 !important;
+                    margin-top: 0 !important;
+                }
 
                 div:has(> div[role="navigation"]),
                 div:has(> div[role="main"]) {
@@ -140,11 +153,25 @@ pub fn run() {
                     display: flex !important; 
                 }
 
+                div[id^="mount_"] > div:nth-child(1) {
+                    height: 100% !important;
+                    min-height: 100% !important;
+                }
+
+                /* Pain */
+                :root {
+                    --header-height: 0px !important;
+                    --x1vs6ftl: 100vh !important;
+                    --x1gw2uv0: 100vh !important;
+                    --x3vadp2: 0px !important;  /* also 56px */
+                    --xn91f5q: 0px !important;  /* also 56px */
+                    --dialog-anchor-vertical-padding: 0px !important;  /* also 56px */
+                }
                 /* =========================================
                                   TITLE BAR
                    ========================================= */
                 #custom-titlebar {
-                    position: fixed; top: 0; left: 0; width: 100%;
+                    position: absolute; top: 0; left: 0; right: 0;
                     height: var(--titlebar-height);
                     background: var(--window-bg);
                     display: flex; justify-content: space-between; align-items: center;
