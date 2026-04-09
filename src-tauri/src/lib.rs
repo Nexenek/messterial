@@ -1,4 +1,6 @@
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::time::Duration;
+use tauri::{Emitter, Listener};
 use tauri::{webview::NewWindowResponse, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_updater::UpdaterExt;
 
@@ -17,7 +19,7 @@ pub fn run() {
                 :root {
                     --titlebar-height: 32px;
                     --gap-size: 8px;
-                    --middle-gap: 2px;
+                    --middle-gap: 15px;
                     --card-radius: 18px; 
                     
                     /* Material 3 Dark Palette */
@@ -45,6 +47,7 @@ pub fn run() {
                 }
 
                 div[id^="mount_"] {
+                    overflow: hidden !important;
                     position: fixed !important;
                     top: var(--titlebar-height) !important;
                     left: 0 !important;
@@ -63,7 +66,7 @@ pub fn run() {
                 div[role="main"] {
                     height: calc(100% - (var(--gap-size) * 2)) !important;
                     margin-top: var(--gap-size) !important;
-                    margin-bottom: var(--gap-size) !important;
+                    /* margin-bottom: var(--gap-size) !important; */
                     
                     clip-path: inset(0 0 0 0 round var(--card-radius)) !important;
                     -webkit-clip-path: inset(0 0 0 0 round var(--card-radius)) !important;
@@ -74,12 +77,16 @@ pub fn run() {
                     contain: layout paint style !important;
                     transform: translateZ(0) !important; 
                 }
-
+                    
                 /* --- LEFT CARD (Sidebar) --- */
                 div[role="navigation"] {
                     margin-left: var(--gap-size) !important;
-                    margin-right: calc(var(--middle-gap) / 2) !important; 
-                    padding-right: 4px !important; 
+                    margin-right: var(--middle-gap) !important; 
+                    height: 100% !important;
+                }
+
+                div[role="navigation"] > div {
+                    background: transparent !important;
                 }
 
                 /* --- RIGHT CARD (Chat View) --- */
@@ -99,7 +106,8 @@ pub fn run() {
                 /* FORCE FILL */
                 div[role="main"] > div,
                 div[role="main"] > div > div,
-                div[role="main"] > div > div > div {
+                div[role="main"] > div > div > div,
+                div[role="main"] > div > div > div > div {
                     width: 100% !important;
                     height: 100% !important;
                     min-height: 100% !important;
@@ -124,7 +132,16 @@ pub fn run() {
 
                 /* Hide Banner bloat */
                 a[href="https://www.facebook.com/"],
-                div[role="banner"] { display: none !important; }
+                div[role="banner"] {
+                    display: none !important;
+                }
+
+                /* kill the reserved space the parent holds for it */
+                div[role="banner"] + div,
+                div:has(> div[role="banner"]) {
+                    padding-top: 0 !important;
+                    margin-top: 0 !important;
+                }
 
                 div:has(> div[role="navigation"]),
                 div:has(> div[role="main"]) {
@@ -138,11 +155,24 @@ pub fn run() {
                     display: flex !important; 
                 }
 
+                div[id^="mount_"] > div:nth-child(1) {
+                    height: 100% !important;
+                    min-height: 100% !important;
+                }
+
+                div[id^="mount_"] > div,
+                div[id^="mount_"] > div > div,
+                div[id^="mount_"] > div > div > div,
+                div[id^="mount_"] > div > div > div > div {
+                    height: 100% !important;
+                    min-height: 100% !important;
+                }
+
                 /* =========================================
                                   TITLE BAR
                    ========================================= */
                 #custom-titlebar {
-                    position: fixed; top: 0; left: 0; width: 100%;
+                    position: absolute; top: 0; left: 0; right: 0;
                     height: var(--titlebar-height);
                     background: var(--window-bg);
                     display: flex; justify-content: space-between; align-items: center;
@@ -446,6 +476,29 @@ pub fn run() {
                     }};
                     turboMode();
 
+                    const fixLayout = () => {{
+                        const overrides = {{
+                            '--x1vs6ftl': 'calc(100vh - 32px)',
+                            '--x1gw2uv0': 'calc(100vh - 32px)',
+                            '--x3vadp2': '0px',
+                            '--xn91f5q': '0px',
+                            '--header-height': '0px',
+                            '--dialog-anchor-vertical-padding': '0px',
+                        }};
+
+                        const apply = () => Object.entries(overrides).forEach(([k, v]) => 
+                            document.documentElement.style.setProperty(k, v)
+                        );
+
+                        apply();
+
+                        new MutationObserver(apply).observe(document.documentElement, {{
+                            attributes: true,
+                            attributeFilter: ['style']
+                        }});
+                    }};
+                    fixLayout();
+
                     // External link handler
                     const setupExternalLinks = () => {{
                         const openExternalUrl = async (href) => {{
@@ -604,6 +657,27 @@ pub fn run() {
                     }};
                     setupBadgeNotifications();
 
+                    // Update consent prompt via events
+                    const setupUpdateConsent = () => {{
+                        if (!window.__TAURI__ || !window.__TAURI__.event) return;
+                        window.__TAURI__.event.listen('messterial:prompt-update', async (event) => {{
+                            try {{
+                                const payload = event && event.payload ? event.payload : {{}};
+                                const current = payload.current || '';
+                                const version = payload.version || '';
+                                const message = `Version ${{version}} is available.\n\nCurrent version: ${{current}}\nNew version: ${{version}}\n\nInstall now?`;
+                                const approved = window.confirm(message);
+                                await window.__TAURI__.event.emit('messterial:update-decision', {{ approved }});
+                            }} catch (err) {{
+                                console.error('Messterial: Update consent failed:', err);
+                                try {{
+                                    await window.__TAURI__.event.emit('messterial:update-decision', {{ approved: false }});
+                                }} catch {{}}
+                            }}
+                        }});
+                    }};
+                    setupUpdateConsent();
+
                     let tauriInterval = setInterval(() => {{
                         if (window.__TAURI__) {{
                             clearInterval(tauriInterval);
@@ -616,35 +690,12 @@ pub fn run() {
                 html = titlebar_html
             );
 
-            let app_handle = app.handle().clone();
             let app_handle_for_new_window = app.handle().clone();
-            
-            tauri::async_runtime::spawn(async move {
-                match app_handle.updater() {
-                    Ok(updater) => {
-                        match updater.check().await {
-                            Ok(Some(update)) => {
-                                println!("Messterial: Update found: {}", update.version);
-                                // Download and install automatically
-                                if let Err(e) = update.download_and_install(|_,_| {}, || {}).await {
-                                    println!("Messterial: Update failed: {}", e);
-                                } else {
-                                    println!("Messterial: Update installed! Restarting...");
-                                    app_handle.restart();
-                                }
-                            }
-                            Ok(None) => println!("Messterial: You are on the latest version."),
-                            Err(e) => println!("Messterial: Failed to check for updates: {}", e),
-                        }
-                    }
-                    Err(e) => println!("Messterial: Failed to initialize updater: {}", e),
-                }
-            });
 
             WebviewWindowBuilder::new(
                 app,
                 "main",
-                WebviewUrl::External("https://www.messenger.com/login".parse().unwrap())
+                WebviewUrl::External("https://www.facebook.com/messages".parse().unwrap())
             )
             .title("Messterial")
             .inner_size(1200.0, 800.0)
@@ -695,7 +746,56 @@ pub fn run() {
             })
             .build()?;
 
+            // Check for updates and ask for user consent via JS confirm
+            {
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    match app_handle.updater() {
+                        Ok(updater) => match updater.check().await {
+                            Ok(Some(update)) => {
+                                println!("Messterial: Update found: {}", update.version);
+                                // Small delay to let the webview initialize its listeners
+                                std::thread::sleep(Duration::from_millis(1500));
 
+                                let _ = app_handle.emit(
+                                    "messterial:prompt-update",
+                                    serde_json::json!({
+                                        "current": update.current_version,
+                                        "version": update.version
+                                    }),
+                                );
+
+                                let (tx, rx) = std::sync::mpsc::channel::<bool>();
+                                let tx_clone = tx.clone();
+                                app_handle.listen("messterial:update-decision", move |event| {
+                                    let payload_str = event.payload();
+                                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(payload_str) {
+                                        if let Some(appr) = val.get("approved").and_then(|v| v.as_bool()) {
+                                            let _ = tx_clone.send(appr);
+                                        }
+                                    }
+                                });
+
+                                let approved = rx.recv_timeout(Duration::from_secs(60)).unwrap_or(false);
+                                if approved {
+                                    println!("Messterial: User approved update, downloading...");
+                                    if let Err(e) = update.download_and_install(|_,_| {}, || {}).await {
+                                        println!("Messterial: Update failed: {}", e);
+                                    } else {
+                                        println!("Messterial: Update installed! Restarting...");
+                                        app_handle.restart();
+                                    }
+                                } else {
+                                    println!("Messterial: User declined update or timeout");
+                                }
+                            }
+                            Ok(None) => println!("Messterial: You are on the latest version."),
+                            Err(e) => println!("Messterial: Failed to check for updates: {}", e),
+                        },
+                        Err(e) => println!("Messterial: Failed to initialize updater: {}", e),
+                    }
+                });
+            }
 
             Ok(())
         })
