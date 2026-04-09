@@ -19,7 +19,7 @@ pub fn run() {
                 :root {
                     --titlebar-height: 32px;
                     --gap-size: 8px;
-                    --middle-gap: 2px;
+                    --middle-gap: 15px;
                     --card-radius: 18px; 
                     
                     /* Material 3 Dark Palette */
@@ -47,6 +47,7 @@ pub fn run() {
                 }
 
                 div[id^="mount_"] {
+                    overflow: hidden !important;
                     position: fixed !important;
                     top: var(--titlebar-height) !important;
                     left: 0 !important;
@@ -65,7 +66,7 @@ pub fn run() {
                 div[role="main"] {
                     height: calc(100% - (var(--gap-size) * 2)) !important;
                     margin-top: var(--gap-size) !important;
-                    margin-bottom: var(--gap-size) !important;
+                    /* margin-bottom: var(--gap-size) !important; */
                     
                     clip-path: inset(0 0 0 0 round var(--card-radius)) !important;
                     -webkit-clip-path: inset(0 0 0 0 round var(--card-radius)) !important;
@@ -76,7 +77,7 @@ pub fn run() {
                     contain: layout paint style !important;
                     transform: translateZ(0) !important; 
                 }
-
+                    
                 /* --- LEFT CARD (Sidebar) --- */
                 div[role="navigation"] {
                     margin-left: var(--gap-size) !important;
@@ -105,7 +106,8 @@ pub fn run() {
                 /* FORCE FILL */
                 div[role="main"] > div,
                 div[role="main"] > div > div,
-                div[role="main"] > div > div > div {
+                div[role="main"] > div > div > div,
+                div[role="main"] > div > div > div > div {
                     width: 100% !important;
                     height: 100% !important;
                     min-height: 100% !important;
@@ -158,15 +160,14 @@ pub fn run() {
                     min-height: 100% !important;
                 }
 
-                /* Pain */
-                :root {
-                    --header-height: 0px !important;
-                    --x1vs6ftl: 100vh !important;
-                    --x1gw2uv0: 100vh !important;
-                    --x3vadp2: 0px !important;  /* also 56px */
-                    --xn91f5q: 0px !important;  /* also 56px */
-                    --dialog-anchor-vertical-padding: 0px !important;  /* also 56px */
+                div[id^="mount_"] > div,
+                div[id^="mount_"] > div > div,
+                div[id^="mount_"] > div > div > div,
+                div[id^="mount_"] > div > div > div > div {
+                    height: 100% !important;
+                    min-height: 100% !important;
                 }
+
                 /* =========================================
                                   TITLE BAR
                    ========================================= */
@@ -474,6 +475,29 @@ pub fn run() {
                         }};
                     }};
                     turboMode();
+
+                    const fixLayout = () => {{
+                        const overrides = {{
+                            '--x1vs6ftl': 'calc(100vh - 32px)',
+                            '--x1gw2uv0': 'calc(100vh - 32px)',
+                            '--x3vadp2': '0px',
+                            '--xn91f5q': '0px',
+                            '--header-height': '0px',
+                            '--dialog-anchor-vertical-padding': '0px',
+                        }};
+
+                        const apply = () => Object.entries(overrides).forEach(([k, v]) => 
+                            document.documentElement.style.setProperty(k, v)
+                        );
+
+                        apply();
+
+                        new MutationObserver(apply).observe(document.documentElement, {{
+                            attributes: true,
+                            attributeFilter: ['style']
+                        }});
+                    }};
+                    fixLayout();
 
                     // External link handler
                     const setupExternalLinks = () => {{
