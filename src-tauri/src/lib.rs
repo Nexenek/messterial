@@ -13,9 +13,6 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .setup(|app| {
             let material_css = r#"
-                /* =========================================
-                                GLOBAL VARIABLES
-                   ========================================= */
                 :root {
                     --titlebar-height: 32px;
                     --gap-size: 8px;
@@ -34,138 +31,6 @@ pub fn run() {
                     --md-active-layer: rgba(255, 255, 255, 0.12);
                     
                     --window-bg: #141414;
-                }
-
-                html, body {
-                    width: 100% !important;
-                    height: 100% !important;
-                    overflow: hidden !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    background-color: var(--window-bg) !important;
-                    font-family: 'Roboto', 'Segoe UI', sans-serif !important;
-                }
-
-                div[id^="mount_"] {
-                    overflow: hidden !important;
-                    position: fixed !important;
-                    top: var(--titlebar-height) !important;
-                    left: 0 !important;
-                    right: 0 !important;
-                    height: calc(100vh - var(--titlebar-height)) !important;
-                    width: 100% !important;
-                    z-index: 1;
-                    background-color: var(--window-bg) !important; 
-                }
-
-                /* =========================================
-                              DUAL FLOATING CARDS
-                   ========================================= */
-
-                div[role="navigation"],
-                div[role="main"] {
-                    height: calc(100% - (var(--gap-size) * 2)) !important;
-                    margin-top: var(--gap-size) !important;
-                    /* margin-bottom: var(--gap-size) !important; */
-                    
-                    clip-path: inset(0 0 0 0 round var(--card-radius)) !important;
-                    -webkit-clip-path: inset(0 0 0 0 round var(--card-radius)) !important;
-                    
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important; 
-                    background-color: transparent !important;
-                    border: none !important;
-                    contain: layout paint style !important;
-                    transform: translateZ(0) !important; 
-                }
-                    
-                /* --- LEFT CARD (Sidebar) --- */
-                div[role="navigation"] {
-                    margin-left: var(--gap-size) !important;
-                    margin-right: var(--middle-gap) !important; 
-                    height: 100% !important;
-                }
-
-                div[role="navigation"] > div {
-                    background: transparent !important;
-                }
-
-                /* --- RIGHT CARD (Chat View) --- */
-                div[role="main"] {
-                    margin-left: -11px !important; 
-                    margin-right: var(--gap-size) !important;
-                    padding: 0 !important;
-                }
-
-                /* --- RESPONSIVE FIX (Single Column Mode) --- */
-                @media (max-width: 707px) { /* For some reason messenger triggers single column at 707px */
-                    div[role="main"] {
-                        margin-left: calc(var(--gap-size) * -1) !important;
-                    }
-                }
-
-                /* FORCE FILL */
-                div[role="main"] > div,
-                div[role="main"] > div > div,
-                div[role="main"] > div > div > div,
-                div[role="main"] > div > div > div > div {
-                    width: 100% !important;
-                    height: 100% !important;
-                    min-height: 100% !important;
-                    max-height: 100% !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    border-radius: 0 !important; 
-                }
-
-                /* =========================================
-                                BLOAT REMOVAL & FIXES
-                   ========================================= */
-                div[role="navigation"][aria-label="Przełącznik skrzynki odbiorczej"],
-                div[role="navigation"][aria-label="Inbox switch"] { 
-                    width: 0 !important;
-                    height: 0 !important;
-                    opacity: 0 !important;
-                    overflow: hidden !important;
-                    position: absolute !important;
-                    pointer-events: none !important;
-                }
-
-                /* Hide Banner bloat */
-                a[href="https://www.facebook.com/"],
-                div[role="banner"] {
-                    display: none !important;
-                }
-
-                /* kill the reserved space the parent holds for it */
-                div[role="banner"] + div,
-                div:has(> div[role="banner"]) {
-                    padding-top: 0 !important;
-                    margin-top: 0 !important;
-                }
-
-                div:has(> div[role="navigation"]),
-                div:has(> div[role="main"]) {
-                    padding: 0 !important;
-                    margin: 0 !important;
-                    background-color: transparent !important;
-                }
-
-                div:has(> div[role="navigation"][aria-label="Przełącznik skrzynki odbiorczej"]) {
-                    padding-left: 0px !important;
-                    display: flex !important; 
-                }
-
-                div[id^="mount_"] > div:nth-child(1) {
-                    height: 100% !important;
-                    min-height: 100% !important;
-                }
-
-                div[id^="mount_"] > div,
-                div[id^="mount_"] > div > div,
-                div[id^="mount_"] > div > div > div,
-                div[id^="mount_"] > div > div > div > div {
-                    height: 100% !important;
-                    min-height: 100% !important;
                 }
 
                 /* =========================================
@@ -235,6 +100,77 @@ pub fn run() {
                     width: 18px; 
                     height: 18px; 
                     fill: currentColor; 
+                }
+
+                /* =========================================
+                                  GENERAL LAYOUT FIXES
+                   ========================================= */
+
+                /* --- stupid ahh offset --- */
+                .x85a59c {
+                    max-height: 100vh !important;
+                    padding-top: var(--titlebar-height) !important;
+                }
+
+                body {
+                    overflow: hidden !important;
+                }
+
+                /* --- RIGHT CARD (Chat View) --- */
+                div[role="main"] {
+                    margin-left: -11px !important; 
+                    margin-right: var(--gap-size) !important;
+                    padding: 0 !important;
+                }
+
+                /* --- RESPONSIVE FIX (Single Column Mode) --- */
+                @media (max-width: 707px) { /* For some reason messenger triggers single column at 707px */
+                    div[role="main"] {
+                        margin-left: calc(var(--gap-size) * -1) !important;
+                    }
+                }
+
+                /* FORCE FILL */
+                div[role="main"] > div,
+                div[role="main"] > div > div,
+                div[role="main"] > div > div > div,
+                div[role="main"] > div > div > div > div {
+                    width: 100% !important;
+                    height: 100% !important;
+                    min-height: 100% !important;
+                    max-height: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border-radius: 0 !important; 
+                }
+
+                /* --- LEFT CARD (Sidebar) --- */
+                div[role="navigation"] {
+                    margin-right: var(--middle-gap) !important; 
+                    height: 100% !important;
+                }
+
+                div[role="navigation"] > div {
+                    background: transparent !important;
+                }
+
+                    /* =========================================
+                                BLOAT REMOVAL & FIXES
+                   ========================================= */
+                div[role="navigation"][aria-label="Przełącznik skrzynki odbiorczej"],
+                div[role="navigation"][aria-label="Inbox switch"] { 
+                    width: 0 !important;
+                    height: 0 !important;
+                    opacity: 0 !important;
+                    overflow: hidden !important;
+                    position: absolute !important;
+                    pointer-events: none !important;
+                }
+
+                /* Hide Banner bloat */
+                a[href="https://www.facebook.com/"],
+                div[role="banner"] {
+                    display: none !important;
                 }
 
                 /* =========================================
@@ -399,6 +335,7 @@ pub fn run() {
                     margin-left: 0 !important;
                     transition: margin-left 0.3s cubic-bezier(0.05, 0.7, 0.1, 1.0) !important;
                 }
+
             "#;
 
             let titlebar_html = r#"
