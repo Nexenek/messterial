@@ -2003,7 +2003,7 @@ dependencies = [
 
 [[package]]
 name = "messterial"
-version = "0.1.2"
+version = "2.0.1"
 dependencies = [
  "serde",
  "serde_json",
