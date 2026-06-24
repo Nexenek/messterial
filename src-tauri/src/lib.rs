@@ -116,21 +116,23 @@ pub fn run() {
                     overflow: hidden !important;
                 }
 
-                /* --- RIGHT CARD (Chat View) --- */
+                /* --- LOCK PANELS IN PLACE --- */
+                /* Take both panels out of Messenger's flow so navigation doesn't shift them */
+
                 div[role="main"] {
-                    margin-left: -11px !important; 
-                    margin-right: var(--gap-size) !important;
+                    position: fixed !important;
+                    left: 360px !important;
+                    right: var(--gap-size) !important;
+                    top: var(--titlebar-height) !important;
+                    bottom: 0 !important;
+                    margin: 0 !important;
                     padding: 0 !important;
+                    width: auto !important;
+                    height: auto !important;
+                    z-index: 1 !important;
                 }
 
-                /* --- RESPONSIVE FIX (Single Column Mode) --- */
-                @media (max-width: 707px) { /* For some reason messenger triggers single column at 707px */
-                    div[role="main"] {
-                        margin-left: calc(var(--gap-size) * -1) !important;
-                    }
-                }
-
-                /* FORCE FILL */
+                /* FORCE FILL children into the fixed container */
                 div[role="main"] > div,
                 div[role="main"] > div > div,
                 div[role="main"] > div > div > div,
@@ -144,14 +146,30 @@ pub fn run() {
                     border-radius: 0 !important; 
                 }
 
-                /* --- LEFT CARD (Sidebar) --- */
+                /* --- LEFT PANEL (Sidebar) --- */
                 div[role="navigation"] {
-                    margin-right: var(--middle-gap) !important; 
-                    height: 100% !important;
+                    position: fixed !important;
+                    left: var(--gap-size) !important;
+                    width: 340px !important;
+                    top: var(--titlebar-height) !important;
+                    bottom: 0 !important;
+                    margin: 0 !important;
+                    height: auto !important;
+                    z-index: 1 !important;
                 }
 
                 div[role="navigation"] > div {
                     background: transparent !important;
+                }
+
+                /* Tighten sidebar on smaller windows */
+                @media (max-width: 840px) {
+                    div[role="main"] { left: 300px !important; }
+                    div[role="navigation"] { width: 280px !important; }
+                }
+                @media (max-width: 707px) {
+                    div[role="main"] { left: 280px !important; }
+                    div[role="navigation"] { width: 260px !important; }
                 }
 
                     /* =========================================
